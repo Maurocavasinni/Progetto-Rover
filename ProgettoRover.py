@@ -133,6 +133,19 @@ def get_distance():
     distance = (t2 - t1) * 340 / 2
     return distance
 
+def where_to_go(d_l, d_c, d_r):
+    max_distance = max(d_l, d_c, d_r)
+
+    if (max_distance == d_l):
+        motor_turn_left()
+        motor_forward()
+    elif (max_distance == d_r):
+        motor_turn_right()
+        motor_forward()
+    else:
+        motor_forward()
+    time.sleep(1)
+
 def loop_rover():
     while True:
         motor_turn_left()
@@ -146,19 +159,9 @@ def loop_rover():
         logging.info(f"Distanza destra: {distance_right:.2f}m")
         motor_turn_left()
 
-        #TODO: Fix if
-        if (distance_center > distance_left):
-            if (distance_center > distance_right):
-                motor_forward()
-                time.sleep(1)
-            else:
-                motor_turn_right()
-                motor_forward()
-                time.sleep(1)
-        else:
-            motor_turn_left()
-            motor_forward()
-            time.sleep(1)
+        where_to_go(distance_left, distance_center, distance_right)
+
+
 
 if __name__ == '__main__':
     try:
