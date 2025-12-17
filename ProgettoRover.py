@@ -98,8 +98,6 @@ def motor_stop():
 def piroettonj():
     motor_turn_left()
     motor_turn_left()
-    motor_turn_left()
-    motor_turn_left()
 
     time.sleep(5)
 
@@ -114,8 +112,7 @@ def led_sirena(led_pin1, led_pin2):
 def collision_avoidance():
     if GPIO.input(IR_M) == False:
         motor_stop()
-    else:
-        motor_forward()
+        piroettonj()
 
 def get_distance():
     GPIO.output(TRIG, GPIO.HIGH)
