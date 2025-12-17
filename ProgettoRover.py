@@ -144,6 +144,7 @@ def where_to_go(d_l, d_c, d_r):
         motor_forward()
     else:
         motor_forward()
+    collision_avoidance()
     time.sleep(1)
 
 def loop_rover():
@@ -160,7 +161,6 @@ def loop_rover():
         motor_turn_left()
 
         where_to_go(distance_left, distance_center, distance_right)
-
 
 
 if __name__ == '__main__':
