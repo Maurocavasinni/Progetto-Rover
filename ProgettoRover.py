@@ -22,9 +22,6 @@ IN3 = 21
 IN4 = 26
 
 # Sensor pins
-IR_M = 22
-IR_L = 27
-IR_R = 18
 TRIG = 17
 ECHO = 4
 
@@ -73,9 +70,6 @@ def setup_gpio():
     GPIO.setup(IN4, GPIO.OUT, initial=GPIO.LOW)
 
     # Sensor setup
-    GPIO.setup(IR_M, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(IR_L, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-    GPIO.setup(IR_R, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(TRIG, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(ECHO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -126,8 +120,6 @@ def motor_stop():
 
 def piroettonj():
     motor_turn_left()
-    motor_turn_left()
-
     time.sleep(2)
 
 def led_sirena(led_pin1, led_pin2):
@@ -138,6 +130,7 @@ def led_sirena(led_pin1, led_pin2):
     GPIO.output(led_pin2, GPIO.LOW)
     time.sleep(0.5)
 
+# Stare sempre a 20 cm di distanza, il sensore IR vede ostacoli a pochi centimetri (~2cm)
 def collision_avoidance():
     if GPIO.input(IR_M) == False:
         motor_stop()
@@ -161,17 +154,17 @@ def get_distance():
 
 def where_to_go(d_l, d_c, d_r):
     max_distance = max(d_l, d_c, d_r)
-    logging.info(f"Valutazione - L:{d_l:.2f}m C:{d_c:.2f}m R:{d_r:.2f}m")
+    logging.info("Valutazione - L:{:.2f}m C:{:.2f}m R:{:.2f}m".format(d_l, d_c, d_r))
 
     if (max_distance == d_l):
         logging.info("Direzione presa: SINISTRA")
         motor_turn_left()
-        time.sleep(0.3) 
+        time.sleep(0.7) 
         motor_forward()
     elif (max_distance == d_r):
         logging.info("Direzione presa: DESTRA")
         motor_turn_right()
-        time.sleep(0.3) 
+        time.sleep(0.7) 
         motor_forward()
     else:
         logging.info("Direzione presa: AVANTI")
@@ -187,12 +180,16 @@ def where_to_go(d_l, d_c, d_r):
 def loop_rover():
     while True:
         motor_turn_left()
+        time.sleep(0.7)
         distance_left = get_distance()
         motor_turn_right()
+        time.sleep(0.7)
         distance_center = get_distance()
         motor_turn_right()
+        time.sleep(0.7)
         distance_right = get_distance()
         motor_turn_left()
+        time.sleep(0.7)
         
         publish_distances(distance_left, distance_center, distance_right)
 
