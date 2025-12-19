@@ -180,11 +180,11 @@ def where_to_go(d_l, d_c, d_r):
     elif (max_distance == d_r):
         logging.info("Direzione presa: DESTRA")
         motor_turn_right()
-        time.sleep(1.0)
+        time.sleep(1)
     else:
         logging.info("Direzione presa: SINISTRA")
         motor_turn_left()
-        time.sleep(1.0)
+        time.sleep(1)
 
     start_time = time.time()
     duration = 1
@@ -221,18 +221,18 @@ def loop_rover():
     while True:
         print("\n--- Scansione SINISTRA ---")
         motor_turn_left()
-        time.sleep(0.9)
+        time.sleep(1)
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
         motor_turn_right()
-        time.sleep(0.9)
+        time.sleep(1)
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
         motor_turn_right()
-        time.sleep(0.9)
+        time.sleep(1)
         distance_right = get_distance()
         motor_turn_left()
-        time.sleep(0.9)
+        time.sleep(1)
 
         where_to_go(distance_left, distance_center, distance_right)
 

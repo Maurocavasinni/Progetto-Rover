@@ -26,6 +26,8 @@ IN4 = 26
 
 # Sensor pins
 FLAME = 6
+IR_L = 27
+IR_R = 18
 TRIG = 17
 ECHO = 4
 
@@ -37,6 +39,7 @@ LED2 = 25
 # Collision avoidance
 SAFE_DISTANCE = 1.00
 DANGER_DISTANCE = 0.50
+SOGLIA_CAMBIAMENTO = 0.05
 MAX_SPEED = 100
 MEDIUM_SPEED = 50
 
@@ -103,6 +106,8 @@ def setup_gpio():
 
     # Sensor setup
     GPIO.setup(FLAME, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(IR_L, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(IR_R, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(TRIG, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(ECHO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -183,13 +188,20 @@ def check_flame():
         logging.info("ALLERTA: Rilevata fiamma.")
         publish_flame_detected()
 
+def check_distance_change():
+    distance1 = get_distance()
+    time.sleep(0.1)
+    distance2 = get_distance()
+
+    return (distance2 - distance1) < SOGLIA_CAMBIAMENTO
+
 def get_distance():
     GPIO.output(TRIG, GPIO.HIGH)
     time.sleep(0.000015)
     GPIO.output(TRIG, GPIO.LOW)
     
     timeout = time.time() + 0.5
-    while GPIO.input(ECHO):
+    while not GPIO.input(ECHO):
         if time.time() > timeout:
             print("TIMEOUT: Echo non ricevuto")
             return 999
@@ -215,11 +227,11 @@ def where_to_go(d_l, d_c, d_r):
     elif (max_distance == d_r):
         logging.info("Direzione presa: DESTRA")
         motor_turn_right()
-        time.sleep(0.7)
+        time.sleep(1)
     else:
         logging.info("Direzione presa: SINISTRA")
         motor_turn_left()
-        time.sleep(0.7)
+        time.sleep(1)
 
     start_time = time.time()
     duration = 1
@@ -231,12 +243,24 @@ def where_to_go(d_l, d_c, d_r):
         if need_stop:
             motor_stop()
             time.sleep(0.3)
+            motor_backward(MEDIUM_SPEED)
+            if (check_distance_change()):
+                motor_stop()
+                motor_turn_left()
+                time.sleep(0.3)
+                motor_backward(MEDIUM_SPEED)
+                if (check_distance_change()):
+                    motor_stop()
+                    motor_turn_right()
+                    time.sleep(0.6)
+                    motor_backward(MEDIUM_SPEED)
+            time.sleep(1)
             piroettonj()
             current_speed = 0
         elif new_speed != current_speed:
             motor_forward(new_speed)
             current_speed = new_speed
-        
+
         check_flame()
         time.sleep(0.1)
 
@@ -273,6 +297,7 @@ if __name__ == '__main__':
         
     except KeyboardInterrupt:
         print("\n=== ARRESTO ROVER ===")
+    finally:
         motor_stop()
         if pwm_ENA:
             pwm_ENA.stop()
