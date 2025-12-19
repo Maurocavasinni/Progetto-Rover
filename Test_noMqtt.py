@@ -17,6 +17,7 @@ IN3 = 21
 IN4 = 26
 
 # Sensor pins
+FLAME = 6
 TRIG = 17
 ECHO = 4
 
@@ -26,10 +27,10 @@ LED1 = 9
 LED2 = 25
 
 # Collision avoidance
-SAFE_DISTANCE = 0.50
-DANGER_DISTANCE = 0.20
+SAFE_DISTANCE = 1.00
+DANGER_DISTANCE = 0.50
 MAX_SPEED = 100
-MEDIUM_SPEED = 60
+MEDIUM_SPEED = 50
 
 pwm_ENA = None
 pwm_ENB = None
@@ -72,9 +73,9 @@ def motor_forward(speed=MAX_SPEED):
     GPIO.output(IN3, True)
     GPIO.output(IN4, False)
 
-def motor_backward():
-    GPIO.output(ENA, True)
-    GPIO.output(ENB, True)
+def motor_backward(speed=MAX_SPEED):
+    pwm_ENA.ChangeDutyCycle(speed)
+    pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, False)
     GPIO.output(IN2, True)
     GPIO.output(IN3, False)
@@ -108,7 +109,6 @@ def piroettonj():
     print("Cambio direzione per ostacolo")
     motor_turn_left()
     time.sleep(2)
-    motor_stop()
 
 def led_sirena():
     print("Sirena LED attiva")
@@ -128,6 +128,12 @@ def collision_avoidance():
         return MEDIUM_SPEED, False
     else:
         return 0, True
+
+def check_flame():
+    if (GPIO.input(FLAME) == GPIO.LOW):
+        print(">>> FIAMMA RILEVATA <<<")
+        led_sirena()
+        logging.info("ALLERTA: Rilevata fiamma.")
 
 def get_distance():
     GPIO.output(TRIG, GPIO.HIGH)
@@ -161,11 +167,11 @@ def where_to_go(d_l, d_c, d_r):
     elif (max_distance == d_r):
         logging.info("Direzione presa: DESTRA")
         motor_turn_right()
-        time.sleep(0.7)
+        time.sleep(1.0)
     else:
         logging.info("Direzione presa: SINISTRA")
         motor_turn_left()
-        time.sleep(0.7)
+        time.sleep(1.0)
 
     start_time = time.time()
     duration = 1
@@ -177,6 +183,8 @@ def where_to_go(d_l, d_c, d_r):
         if need_stop:
             motor_stop()
             time.sleep(0.3)
+            motor_backward(MEDIUM_SPEED)
+            time.sleep(1)
             piroettonj()
             current_speed = 0
         elif new_speed != current_speed:
@@ -190,18 +198,18 @@ def loop_rover():
     while True:
         print("\n--- Scansione SINISTRA ---")
         motor_turn_left()
-        time.sleep(0.7)
+        time.sleep(1.0)
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
         motor_turn_right()
-        time.sleep(0.7)
+        time.sleep(1.0)
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
         motor_turn_right()
-        time.sleep(0.7)
+        time.sleep(1.0)
         distance_right = get_distance()
         motor_turn_left()
-        time.sleep(0.7)
+        time.sleep(1.0)
 
         where_to_go(distance_left, distance_center, distance_right)
 

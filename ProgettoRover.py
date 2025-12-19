@@ -25,7 +25,7 @@ IN3 = 21
 IN4 = 26
 
 # Sensor pins
-FLAME = None
+FLAME = 6
 TRIG = 17
 ECHO = 4
 
@@ -35,10 +35,10 @@ LED1 = 9
 LED2 = 25
 
 # Collision avoidance
-SAFE_DISTANCE = 0.50
-DANGER_DISTANCE = 0.20
+SAFE_DISTANCE = 1.00
+DANGER_DISTANCE = 0.50
 MAX_SPEED = 100
-MEDIUM_SPEED = 60
+MEDIUM_SPEED = 50
 
 pwm_ENA = None
 pwm_ENB = None
@@ -245,18 +245,18 @@ def loop_rover():
     while True:
         print("\n--- Scansione SINISTRA ---")
         motor_turn_left()
-        time.sleep(0.7)
+        time.sleep(1)
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
         motor_turn_right()
-        time.sleep(0.7)
+        time.sleep(1)
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
         motor_turn_right()
-        time.sleep(0.7)
+        time.sleep(1)
         distance_right = get_distance()
         motor_turn_left()
-        time.sleep(0.7)
+        time.sleep(1)
         
         publish_distances(distance_left, distance_center, distance_right)
 
