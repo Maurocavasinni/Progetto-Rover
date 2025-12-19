@@ -29,8 +29,10 @@ LED2 = 25
 # Collision avoidance
 SAFE_DISTANCE = 1.00
 DANGER_DISTANCE = 0.50
+SOGLIA_CAMBIAMENTO = 0.05
 MAX_SPEED = 100
 MEDIUM_SPEED = 50
+
 
 pwm_ENA = None
 pwm_ENB = None
@@ -135,6 +137,13 @@ def check_flame():
         led_sirena()
         logging.info("ALLERTA: Rilevata fiamma.")
 
+def check_distance_change():
+    distance1 = get_distance()
+    time.sleep(0.1)
+    distance2 = get_distance()
+
+    return (distance2 - distance1) < SOGLIA_CAMBIAMENTO
+
 def get_distance():
     GPIO.output(TRIG, GPIO.HIGH)
     time.sleep(0.000015)
@@ -184,6 +193,18 @@ def where_to_go(d_l, d_c, d_r):
             motor_stop()
             time.sleep(0.3)
             motor_backward(MEDIUM_SPEED)
+            if (check_distance_change()):
+                motor_stop()
+                motor_turn_left()
+                time.sleep(0.3)
+                motor_backward(MEDIUM_SPEED)
+                if (check_distance_change()):
+                    motor_stop()
+                    motor_turn_right()
+                    time.sleep(0.3)
+                    motor_turn_right()
+                    time.sleep(0.3)
+                    motor_backward(MEDIUM_SPEED)
             time.sleep(1)
             piroettonj()
             current_speed = 0
