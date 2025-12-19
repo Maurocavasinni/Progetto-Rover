@@ -119,9 +119,9 @@ def motor_forward(speed=MAX_SPEED):
     GPIO.output(IN3, True)
     GPIO.output(IN4, False)
 
-def motor_backward():
-    GPIO.output(ENA, True)
-    GPIO.output(ENB, True)
+def motor_backward(speed=MAX_SPEED):
+    pwm_ENA.ChangeDutyCycle(speed)
+    pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, False)
     GPIO.output(IN2, True)
     GPIO.output(IN3, False)

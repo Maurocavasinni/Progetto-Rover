@@ -99,15 +99,6 @@ def motor_stop():
     GPIO.output(IN3, False)
     GPIO.output(IN4, False)
 
-# Gesù è nato
-def piroettonj():
-    GPIO.output(ENA, False)
-    GPIO.output(ENB, False)
-    GPIO.output(IN1, False)
-    GPIO.output(IN2, False)
-    GPIO.output(IN3, False)
-    GPIO.output(IN4, False)
-
 def test_motor(motor_func, motor_name):
     print('Testing %s...' % motor_name)
     motor_func()

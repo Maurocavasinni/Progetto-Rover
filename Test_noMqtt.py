@@ -18,6 +18,8 @@ IN4 = 26
 
 # Sensor pins
 FLAME = 6
+IR_L = 27
+IR_R = 18
 TRIG = 17
 ECHO = 4
 
@@ -32,7 +34,6 @@ DANGER_DISTANCE = 0.50
 SOGLIA_CAMBIAMENTO = 0.05
 MAX_SPEED = 100
 MEDIUM_SPEED = 50
-
 
 pwm_ENA = None
 pwm_ENB = None
@@ -59,6 +60,9 @@ def setup_gpio():
     pwm_ENB.start(0)
 
     # Sensor setup
+    GPIO.setup(FLAME, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(IR_L, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+    GPIO.setup(IR_R, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     GPIO.setup(TRIG, GPIO.OUT, initial=GPIO.LOW)
     GPIO.setup(ECHO, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -201,9 +205,7 @@ def where_to_go(d_l, d_c, d_r):
                 if (check_distance_change()):
                     motor_stop()
                     motor_turn_right()
-                    time.sleep(0.3)
-                    motor_turn_right()
-                    time.sleep(0.3)
+                    time.sleep(0.6)
                     motor_backward(MEDIUM_SPEED)
             time.sleep(1)
             piroettonj()
@@ -219,18 +221,18 @@ def loop_rover():
     while True:
         print("\n--- Scansione SINISTRA ---")
         motor_turn_left()
-        time.sleep(1.0)
+        time.sleep(0.9)
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
         motor_turn_right()
-        time.sleep(1.0)
+        time.sleep(0.9)
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
         motor_turn_right()
-        time.sleep(1.0)
+        time.sleep(0.9)
         distance_right = get_distance()
         motor_turn_left()
-        time.sleep(1.0)
+        time.sleep(0.9)
 
         where_to_go(distance_left, distance_center, distance_right)
 
