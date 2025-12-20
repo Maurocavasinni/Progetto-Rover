@@ -5,9 +5,6 @@ import RPi.GPIO as GPIO
 import time
 import logging
 
-# Trova fiamma -> suono e stop loop
-# Sensori IR ai lati per evitare collisioni
-
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
