@@ -35,11 +35,16 @@ LED2 = 25
 SAFE_DISTANCE = 1.00
 DANGER_DISTANCE = 0.50
 SOGLIA_CAMBIAMENTO = 0.05
+
+# Custom speed
 MAX_SPEED = 100
 MEDIUM_SPEED = 50
 
 pwm_ENA = None
 pwm_ENB = None
+
+# Check flame
+flame_detected = False
 
 logging.basicConfig(
     filename='rover_patrol.log',
@@ -152,10 +157,15 @@ def collision_avoidance():
         return 0, True
 
 def check_flame():
+    global flame_detected
     if (GPIO.input(FLAME) == GPIO.LOW):
         print(">>> FIAMMA RILEVATA <<<")
-        led_sirena()
+        flame_detected = True
         logging.info("ALLERTA: Rilevata fiamma.")
+        for _ in range(10):
+            led_sirena()
+        return True
+    return False
 
 def check_distance_change():
     distance1 = get_distance()
@@ -246,22 +256,26 @@ def where_to_go(d_l, d_c, d_r):
         time.sleep(0.1)
 
 def loop_rover():
+    global flame_detected
     print("Avvio pattugliamento...")
-    while True:
+    while not flame_detected:
         print("\n--- Scansione SINISTRA ---")
         motor_turn_left()
         time.sleep(1)
-        check_flame()
+        if check_flame():
+            break
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
         motor_turn_right()
         time.sleep(1)
-        check_flame()
+        if check_flame():
+            break
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
         motor_turn_right()
         time.sleep(1)
-        check_flame()
+        if check_flame():
+            break
         distance_right = get_distance()
         motor_turn_left()
         time.sleep(1)
