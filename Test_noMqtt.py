@@ -5,6 +5,9 @@ import RPi.GPIO as GPIO
 import time
 import logging
 
+# Trova fiamma -> suono e stop loop
+# Sensori IR ai lati per evitare collisioni
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
@@ -115,6 +118,10 @@ def piroettonj():
     print("Cambio direzione per ostacolo")
     motor_turn_left()
     time.sleep(2)
+    motor_stop()
+
+def ir_sensor_check(ir_input):
+    return GPIO.input(ir_input) == False
 
 def led_sirena():
     print("Sirena LED attiva")
@@ -125,7 +132,16 @@ def led_sirena():
     GPIO.output(LED0, GPIO.LOW)
     time.sleep(0.5)
 
+# Evita le collisioni.
+# Dopo un check preventivo dei sensori infrarossi laterali, calcola la distanza di fronte e seleziona una velocità di crociera.
 def collision_avoidance():
+    if(ir_sensor_check(IR_L)):
+        motor_turn_right()
+        time.sleep(0.5)
+    elif(ir_sensor_check(IR_R)):
+        motor_turn_left()
+        time.sleep(0.5)
+
     distance = get_distance()
     
     if distance > SAFE_DISTANCE:
@@ -171,9 +187,31 @@ def get_distance():
     print("Distanza rilevata: {:.2f}m".format(distance))
     return distance
 
+# Funzione che sbroglia il rover dal trovarsi bloccato in un angolo
+def untanglement():
+    if (check_distance_change()):
+        motor_stop()
+        if (ir_sensor_check(IR_L)):
+            print("Ostacolo trovato dal sensore sinistro.")
+            motor_turn_left()
+            time.sleep(0.5)
+        elif (ir_sensor_check(IR_R)):
+            print("Ostacolo trovato dal sensore destro.")
+            motor_turn_right()
+            time.sleep(0.5)
+    motor_backward(MEDIUM_SPEED)
+
 def where_to_go(d_l, d_c, d_r):
     max_distance = max(d_l, d_c, d_r)
     logging.info("Valutazione - L:{:.2f}m C:{:.2f}m R:{:.2f}m".format(d_l, d_c, d_r))
+
+    if max_distance < DANGER_DISTANCE:
+        motor_backward(MEDIUM_SPEED)
+        time.sleep(0.5)
+        untanglement()
+        time.sleep(1.5)    
+        motor_stop()
+        time.sleep(0.3)
 
     if (max_distance == d_c):
         logging.info("Direzione presa: AVANTI")
@@ -195,18 +233,9 @@ def where_to_go(d_l, d_c, d_r):
         
         if need_stop:
             motor_stop()
-            time.sleep(0.3)
             motor_backward(MEDIUM_SPEED)
-            if (check_distance_change()):
-                motor_stop()
-                motor_turn_left()
-                time.sleep(0.3)
-                motor_backward(MEDIUM_SPEED)
-                if (check_distance_change()):
-                    motor_stop()
-                    motor_turn_right()
-                    time.sleep(0.6)
-                    motor_backward(MEDIUM_SPEED)
+            time.sleep(0.3)
+            untanglement()
             time.sleep(1)
             piroettonj()
             current_speed = 0
@@ -222,14 +251,17 @@ def loop_rover():
         print("\n--- Scansione SINISTRA ---")
         motor_turn_left()
         time.sleep(1)
+        check_flame()
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
         motor_turn_right()
         time.sleep(1)
+        check_flame()
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
         motor_turn_right()
         time.sleep(1)
+        check_flame()
         distance_right = get_distance()
         motor_turn_left()
         time.sleep(1)
