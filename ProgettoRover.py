@@ -42,6 +42,7 @@ DANGER_DISTANCE = 0.50
 SOGLIA_CAMBIAMENTO = 0.05
 MAX_SPEED = 100
 MEDIUM_SPEED = 50
+TURN_SPEED = 70
 
 pwm_ENA = None
 pwm_ENB = None
@@ -132,22 +133,54 @@ def motor_backward(speed=MAX_SPEED):
     GPIO.output(IN3, False)
     GPIO.output(IN4, True)
 
-def motor_turn_left():
-    GPIO.output(ENA, True)
-    GPIO.output(ENB, True)
+def motor_turn_left(speed=MAX_SPEED):
+    pwm_ENA.ChangeDutyCycle(speed)
+    pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, True)
     GPIO.output(IN2, False)
     GPIO.output(IN3, False)
     GPIO.output(IN4, True)
 
-def motor_turn_right():
-    GPIO.output(ENA, True)
-    GPIO.output(ENB, True)
+def motor_turn_right(speed=MAX_SPEED):
+    pwm_ENA.ChangeDutyCycle(speed)
+    pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, False)
     GPIO.output(IN2, True)
     GPIO.output(IN3, True)
     GPIO.output(IN4, False)
 
+def motor_curve_left(speed=TURN_SPEED):
+    pwm_ENA.ChangeDutyCycle(speed)
+    pwm_ENB.ChangeDutyCycle(MAX_SPEED)
+    GPIO.output(IN1, True)
+    GPIO.output(IN2, False)
+    GPIO.output(IN3, True)
+    GPIO.output(IN4, False)
+
+def motor_curve_right(speed=TURN_SPEED):
+    pwm_ENA.ChangeDutyCycle(MAX_SPEED)
+    pwm_ENB.ChangeDutyCycle(speed)
+    GPIO.output(IN1, True)
+    GPIO.output(IN2, False)
+    GPIO.output(IN3, True)
+    GPIO.output(IN4, False)
+
+def motor_curve_left_backward(speed=TURN_SPEED):
+    pwm_ENA.ChangeDutyCycle(speed)
+    pwm_ENB.ChangeDutyCycle(MAX_SPEED)
+    GPIO.output(IN1, False)
+    GPIO.output(IN2, True)
+    GPIO.output(IN3, False)
+    GPIO.output(IN4, True)
+
+def motor_curve_right_backward(speed=TURN_SPEED):
+    pwm_ENA.ChangeDutyCycle(MAX_SPEED)
+    pwm_ENB.ChangeDutyCycle(speed)
+    GPIO.output(IN1, False)
+    GPIO.output(IN2, True)
+    GPIO.output(IN3, False)
+    GPIO.output(IN4, True)
+    
 def motor_stop():
     pwm_ENA.ChangeDutyCycle(0)
     pwm_ENB.ChangeDutyCycle(0)
@@ -158,8 +191,8 @@ def motor_stop():
 
 def piroettonj():
     print("Cambio direzione per ostacolo")
-    motor_turn_left()
-    time.sleep(2)
+    motor_turn_left(MEDIUM_SPEED)
+    time.sleep(1.5)
     motor_stop()
 
 def led_sirena():
@@ -188,7 +221,7 @@ def check_flame():
         logging.info("ALLERTA: Rilevata fiamma.")
         publish_flame_detected()
 
-def check_distance_change():
+def check_distance_change_amount():
     distance1 = get_distance()
     time.sleep(0.1)
     distance2 = get_distance()
@@ -218,6 +251,40 @@ def get_distance():
     print("Distanza rilevata: {:.2f}m".format(distance))
     return distance
 
+def check_ir_sensors():
+    ir_left = GPIO.input(IR_L)
+    ir_right = GPIO.input(IR_R)
+    
+    if ir_left == GPIO.LOW and ir_right == GPIO.LOW:
+        return 'entrambi'
+    elif ir_left == GPIO.LOW:
+        return 'sinistro'
+    elif ir_right == GPIO.LOW:
+        return 'destro'
+    else:
+        return 'none'
+
+def handle_side_collision():
+    ir_sensors = check_ir_sensors()
+
+    if ir_sensors == 'entrambi':
+        motor_stop()
+        time.sleep(0.2)
+        motor_backward(MEDIUM_SPEED)
+        time.sleep(0.5)
+        motor_stop()
+        return True
+    elif ir_sensors == 'sinistro':
+        motor_curve_right()
+        time.sleep(0.3)
+        return True
+    elif ir_sensors == 'destro':
+        motor_curve_left()
+        time.sleep(0.3)
+        return True
+    
+    return False
+
 def where_to_go(d_l, d_c, d_r):
     max_distance = max(d_l, d_c, d_r)
     logging.info("Valutazione - L:{:.2f}m C:{:.2f}m R:{:.2f}m".format(d_l, d_c, d_r))
@@ -238,23 +305,29 @@ def where_to_go(d_l, d_c, d_r):
     current_speed = 0
     
     while (time.time() - start_time) < duration:
+        if handle_side_collision():
+            time.sleep(0.1)
+            continue
+
         new_speed, need_stop = collision_avoidance()
         
         if need_stop:
             motor_stop()
             time.sleep(0.3)
             motor_backward(MEDIUM_SPEED)
-            if (check_distance_change()):
+            time.sleep(0.5)
+            if (check_distance_change_amount()):
                 motor_stop()
-                motor_turn_left()
-                time.sleep(0.3)
-                motor_backward(MEDIUM_SPEED)
-                if (check_distance_change()):
+                time.sleep(0.2)
+                motor_curve_left_backward()
+                time.sleep(0.5)
+                if (check_distance_change_amount()):
                     motor_stop()
-                    motor_turn_right()
-                    time.sleep(0.6)
-                    motor_backward(MEDIUM_SPEED)
-            time.sleep(1)
+                    time.sleep(0.2)
+                    motor_curve_right_backward()
+                    time.sleep(0.8)
+            motor_stop()
+            time.sleep(0.3)
             piroettonj()
             current_speed = 0
         elif new_speed != current_speed:
@@ -268,19 +341,26 @@ def loop_rover():
     print("Avvio pattugliamento...")
     while True:
         print("\n--- Scansione SINISTRA ---")
-        motor_turn_left()
+        motor_turn_left(MEDIUM_SPEED)
         time.sleep(1)
+        motor_stop()
+        time.sleep(0.2)
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
-        motor_turn_right()
+        motor_turn_right(MEDIUM_SPEED)
         time.sleep(1)
+        motor_stop()
+        time.sleep(0.2)
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
-        motor_turn_right()
+        motor_turn_right(MEDIUM_SPEED)
         time.sleep(1)
+        motor_stop()
+        time.sleep(0.2)
         distance_right = get_distance()
-        motor_turn_left()
+        motor_turn_left(MEDIUM_SPEED)
         time.sleep(1)
+        motor_stop()
         
         publish_distances(distance_left, distance_center, distance_right)
 
