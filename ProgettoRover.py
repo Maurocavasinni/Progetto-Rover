@@ -149,7 +149,7 @@ def motor_turn_right(speed=MAX_SPEED):
     GPIO.output(IN3, True)
     GPIO.output(IN4, False)
 
-def motor_curve_left(speed=TURN_SPEED):
+def motor_curve_left_forward(speed=TURN_SPEED):
     pwm_ENA.ChangeDutyCycle(speed)
     pwm_ENB.ChangeDutyCycle(MAX_SPEED)
     GPIO.output(IN1, True)
@@ -157,7 +157,7 @@ def motor_curve_left(speed=TURN_SPEED):
     GPIO.output(IN3, True)
     GPIO.output(IN4, False)
 
-def motor_curve_right(speed=TURN_SPEED):
+def motor_curve_right_forward(speed=TURN_SPEED):
     pwm_ENA.ChangeDutyCycle(MAX_SPEED)
     pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, True)
@@ -275,11 +275,11 @@ def handle_side_collision():
         motor_stop()
         return True
     elif ir_sensors == 'sinistro':
-        motor_curve_right()
+        motor_curve_right_forward()
         time.sleep(0.3)
         return True
     elif ir_sensors == 'destro':
-        motor_curve_left()
+        motor_curve_left_forward()
         time.sleep(0.3)
         return True
     
