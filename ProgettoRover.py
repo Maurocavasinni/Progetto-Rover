@@ -38,7 +38,7 @@ LED2 = 25
 
 # Collision avoidance
 SAFE_DISTANCE = 1.00
-DANGER_DISTANCE = 0.50
+DANGER_DISTANCE = 0.25
 SOGLIA_CAMBIAMENTO = 0.05
 MAX_SPEED = 100
 MEDIUM_SPEED = 50
@@ -135,7 +135,7 @@ def motor_backward(speed=MAX_SPEED):
     GPIO.output(IN3, False)
     GPIO.output(IN4, True)
 
-def motor_turn_left(speed=MAX_SPEED):
+def motor_turn_left(speed=MEDIUM_SPEED):
     pwm_ENA.ChangeDutyCycle(speed)
     pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, True)
@@ -143,7 +143,7 @@ def motor_turn_left(speed=MAX_SPEED):
     GPIO.output(IN3, False)
     GPIO.output(IN4, True)
 
-def motor_turn_right(speed=MAX_SPEED):
+def motor_turn_right(speed=MEDIUM_SPEED):
     pwm_ENA.ChangeDutyCycle(speed)
     pwm_ENB.ChangeDutyCycle(speed)
     GPIO.output(IN1, False)
@@ -351,7 +351,7 @@ def loop_rover():
     print("Avvio pattugliamento...")
     while not flame_detected:
         print("\n--- Scansione SINISTRA ---")
-        motor_turn_left(MEDIUM_SPEED)
+        motor_turn_left()
         time.sleep(1)
         if check_flame():
             break
@@ -359,7 +359,7 @@ def loop_rover():
         time.sleep(0.2)
         distance_left = get_distance()
         print("--- Scansione CENTRO ---")
-        motor_turn_right(MEDIUM_SPEED)
+        motor_turn_right()
         time.sleep(1)
         if check_flame():
             break
@@ -367,14 +367,14 @@ def loop_rover():
         time.sleep(0.2)
         distance_center = get_distance()
         print("--- Scansione DESTRA ---")
-        motor_turn_right(MEDIUM_SPEED)
+        motor_turn_right()
         time.sleep(1)
         if check_flame():
             break
         motor_stop()
         time.sleep(0.2)
         distance_right = get_distance()
-        motor_turn_left(MEDIUM_SPEED)
+        motor_turn_left()
         time.sleep(1)
         motor_stop()
         
