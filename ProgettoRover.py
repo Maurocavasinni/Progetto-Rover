@@ -276,12 +276,13 @@ def handle_side_collision():
     ir_sensors = check_ir_sensors()
 
     if ir_sensors == 'entrambi':
-        motor_stop()
-        time.sleep(0.2)
-        motor_backward(MEDIUM_SPEED)
-        time.sleep(0.5)
-        motor_stop()
-        return True
+        if (get_distance() <= DANGER_DISTANCE):
+            motor_stop()
+            time.sleep(0.2)
+            motor_backward(MEDIUM_SPEED)
+            time.sleep(0.5)
+            motor_stop()
+            return True
     elif ir_sensors == 'sinistro':
         motor_curve_right_forward()
         time.sleep(0.3)
