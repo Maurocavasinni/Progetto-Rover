@@ -191,9 +191,12 @@ def motor_stop():
     GPIO.output(IN3, False)
     GPIO.output(IN4, False)
 
-def piroettonj():
+def piroettonj(direction='l'):
     print("Cambio direzione per ostacolo")
-    motor_turn_left(MEDIUM_SPEED)
+    if (direction == 'r'):
+        motor_turn_right(MEDIUM_SPEED)
+    else:
+        motor_turn_left(MEDIUM_SPEED)
     time.sleep(1.5)
     motor_stop()
 
@@ -216,13 +219,24 @@ def collision_avoidance():
     else:
         return 0, True
 
+def festoni():
+    led_sirena()
+    piroettonj('r')
+    piroettonj('l')
+    # PLEASE DON'T CRY
+    motor_forward(MEDIUM_SPEED)
+    time.sleep(0.3)
+    piroettonj('r')
+    piroettonj('l')
+
+
 def check_flame():
     global flame_detected
 
     if (GPIO.input(FLAME) == GPIO.LOW):
         print(">>> FIAMMA RILEVATA <<<")
         flame_detected = True
-        led_sirena()
+        festoni()
         logging.info("ALLERTA: Rilevata fiamma.")
         publish_flame_detected()
         return True
@@ -234,7 +248,7 @@ def check_distance_change_amount():
     time.sleep(0.1)
     distance2 = get_distance()
 
-    return (distance2 - distance1) < SOGLIA_CAMBIAMENTO
+    return abs(distance2 - distance1) < SOGLIA_CAMBIAMENTO
 
 def get_distance():
     GPIO.output(TRIG, GPIO.HIGH)
